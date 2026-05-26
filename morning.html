@@ -127,6 +127,48 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
+        }
+
+        .music-player {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .music-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.7);
+            padding: 10px 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 12px;
+            letter-spacing: 2px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .music-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        .music-btn.playing {
+            background: rgba(255,215,0,0.2);
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+
+        .music-icon {
+            font-size: 16px;
+        }
             font-size: 13px;
             color: rgba(255,255,255,0.5);
             letter-spacing: 2px;
@@ -255,6 +297,13 @@
     </style>
 </head>
 <body>
+    <div class="music-player">
+        <button class="music-btn" id="musicBtn" onclick="toggleMusic()">
+            <span class="music-icon" id="musicIcon">🎵</span>
+            <span id="musicText">播放音乐</span>
+        </button>
+    </div>
+
     <div class="slideshow">
         <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920')"></div>
         <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920')"></div>
@@ -296,6 +345,43 @@
     <div class="confetti-container" id="confettiContainer"></div>
 
     <script>
+        // 免费音乐源 - 使用Pixabay的免费音乐
+        const musicUrls = [
+            'https://cdn.pixabay.com/audio/2022/03/15/audio_4b3a88d0b0.mp3',
+            'https://cdn.pixabay.com/audio/2022/10/25/audio_946bc8de87.mp3',
+            'https://cdn.pixabay.com/audio/2023/07/30/audio_e5b6e6c3d5.mp3'
+        ];
+        const musicNames = ['清晨', '午后', '夜幕'];
+        let currentMusicIndex = 0;
+        let isPlaying = false;
+        let audio = new Audio();
+
+        function toggleMusic() {
+            if (!isPlaying) {
+                loadMusic(currentMusicIndex);
+                audio.play();
+                isPlaying = true;
+                document.getElementById('musicBtn').classList.add('playing');
+                document.getElementById('musicIcon').textContent = '⏸️';
+                document.getElementById('musicText').textContent = musicNames[currentMusicIndex];
+            } else {
+                audio.pause();
+                isPlaying = false;
+                document.getElementById('musicBtn').classList.remove('playing');
+                document.getElementById('musicIcon').textContent = '🎵';
+                document.getElementById('musicText').textContent = '播放音乐';
+            }
+        }
+
+        function loadMusic(index) {
+            audio.src = musicUrls[index];
+            audio.addEventListener('ended', () => {
+                currentMusicIndex = (currentMusicIndex + 1) % musicUrls.length;
+                loadMusic(currentMusicIndex);
+                if (isPlaying) audio.play();
+            });
+        }
+
         const params = new URLSearchParams(window.location.search);
         const name = params.get('n') || '';
         const customMsg = params.get('m') || '';
@@ -357,7 +443,7 @@
             document.getElementById('greeting').innerHTML = `<span style="font-size:32px;margin-right:8px">${greeting.emoji}</span>${greeting.text}`;
 
             if (name) {
-                document.getElementById('recipient').textContent = `${name}，`;
+                document.getElementById('recipient').textContent = name;
             }
             if (customMsg) {
                 document.getElementById('message').textContent = customMsg;
