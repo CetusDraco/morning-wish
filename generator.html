@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>早安祝福生成器</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+
+        .generator {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 50px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffd700;
+            font-size: 28px;
+            font-weight: 300;
+            margin-bottom: 40px;
+            letter-spacing: 8px;
+        }
+
+        .field {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px 20px;
+            color: #fff;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #ffd700;
+            background: rgba(255,215,0,0.1);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: rgba(255,255,255,0.3);
+        }
+
+        textarea {
+            resize: none;
+            height: 80px;
+        }
+
+        .btn {
+            width: 100%;
+            background: linear-gradient(135deg, #ffd700, #ff6b35);
+            border: none;
+            padding: 18px;
+            font-size: 16px;
+            color: #1a1a2e;
+            font-weight: bold;
+            letter-spacing: 4px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255,215,0,0.3);
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border: 1px dashed rgba(255,215,0,0.3);
+        }
+
+        .result-label {
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .link-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .link-input {
+            flex: 1;
+            background: rgba(0,0,0,0.3);
+            border: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .copy-btn {
+            background: #ffd700;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #fff;
+        }
+
+        .copy-btn.copied {
+            background: #4ecdc4;
+            color: #fff;
+        }
+
+        .preview-btn {
+            width: 100%;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.8);
+            padding: 15px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 10px;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .preview-btn:hover {
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+
+        .tips {
+            text-align: center;
+            margin-top: 30px;
+            color: rgba(255,255,255,0.4);
+            font-size: 13px;
+        }
+
+        .emoji {
+            font-size: 60px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="generator">
+        <div class="emoji">🌅</div>
+        <h1>早安祝福</h1>
+
+        <div class="field">
+            <label>送给谁</label>
+            <input type="text" id="to" placeholder="输入名字，如：小明">
+        </div>
+
+        <div class="field">
+            <label>祝福语</label>
+            <textarea id="msg" placeholder="输入你想说的话，如：愿你今天事事顺利"></textarea>
+        </div>
+
+        <div class="field">
+            <label>你的署名</label>
+            <input type="text" id="from" placeholder="输入你的名字，如：小红">
+        </div>
+
+        <button class="btn" onclick="generate()">生成祝福链接</button>
+
+        <div class="result" id="result">
+            <div class="result-label">你的祝福链接</div>
+            <div class="link-box">
+                <input type="text" class="link-input" id="linkInput" readonly>
+                <button class="copy-btn" id="copyBtn" onclick="copyLink()">复制</button>
+            </div>
+            <button class="preview-btn" onclick="preview()">👁️ 预览效果</button>
+        </div>
+
+        <div class="tips">发送给朋友，让他们感受你的心意 ✨</div>
+    </div>
+
+    <script>
+        const baseUrl = 'https://morning-gift.loca.lt/morning';
+
+        function generate() {
+            const to = document.getElementById('to').value.trim();
+            const msg = document.getElementById('msg').value.trim();
+            const from = document.getElementById('from').value.trim();
+
+            let url = baseUrl;
+            const params = [];
+            if (to) params.push(`to=${encodeURIComponent(to)}`);
+            if (msg) params.push(`msg=${encodeURIComponent(msg)}`);
+            if (from) params.push(`from=${encodeURIComponent(from)}`);
+            if (params.length) url += '?' + params.join('&');
+
+            document.getElementById('linkInput').value = url;
+            document.getElementById('result').style.display = 'block';
+        }
+
+        function copyLink() {
+            const input = document.getElementById('linkInput');
+            input.select();
+            document.execCommand('copy');
+            const btn = document.getElementById('copyBtn');
+            btn.textContent = '已复制';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = '复制';
+                btn.classList.remove('copied');
+            }, 2000);
+        }
+
+        function preview() {
+            const url = document.getElementById('linkInput').value;
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>
