@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>早安祝福</title>
+    <title>祝福</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -65,58 +65,58 @@
         }
 
         .recipient {
-            font-size: 28px;
+            font-size: 26px;
             color: #ffd700;
-            margin-bottom: 15px;
-            letter-spacing: 8px;
+            margin-bottom: 12px;
+            letter-spacing: 6px;
             text-shadow: 0 2px 20px rgba(0,0,0,0.5);
         }
 
         .greeting {
-            font-size: 32px;
+            font-size: 30px;
             font-weight: 300;
             color: #fff;
             margin-bottom: 20px;
-            letter-spacing: 10px;
+            letter-spacing: 8px;
         }
 
         .time {
-            font-size: 80px;
+            font-size: 72px;
             font-weight: 100;
             color: #fff;
-            letter-spacing: 12px;
+            letter-spacing: 10px;
             text-shadow: 0 4px 30px rgba(0,0,0,0.5);
         }
 
         .date {
-            font-size: 14px;
+            font-size: 13px;
             color: rgba(255,255,255,0.8);
-            letter-spacing: 5px;
-            margin-top: 15px;
+            letter-spacing: 4px;
+            margin-top: 12px;
             text-transform: uppercase;
         }
 
         .message {
-            margin-top: 40px;
-            font-size: 18px;
+            margin-top: 35px;
+            font-size: 17px;
             color: rgba(255,255,255,0.9);
-            line-height: 2;
-            max-width: 500px;
+            line-height: 1.8;
+            max-width: 480px;
         }
 
         .quote-block {
             position: fixed;
-            bottom: 120px;
+            bottom: 130px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
             text-align: center;
-            max-width: 600px;
+            max-width: 560px;
         }
 
         .quote {
-            font-size: 14px;
-            color: rgba(255,255,255,0.7);
+            font-size: 13px;
+            color: rgba(255,255,255,0.65);
             font-style: italic;
         }
 
@@ -127,7 +127,7 @@
             transform: translateX(-50%);
             z-index: 10;
             font-size: 12px;
-            color: rgba(255,255,255,0.4);
+            color: rgba(255,255,255,0.5);
             letter-spacing: 2px;
         }
 
@@ -138,7 +138,7 @@
             transform: translateX(-50%);
             z-index: 10;
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .control-dot {
@@ -179,26 +179,26 @@
             to { transform: scale(1); opacity: 1; }
         }
 
-        .surprise-icon { font-size: 100px; margin-bottom: 25px; }
+        .surprise-icon { font-size: 90px; margin-bottom: 20px; }
 
         .surprise-text {
-            font-size: 36px;
+            font-size: 32px;
             color: #ffd700;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .surprise-sub {
-            font-size: 18px;
+            font-size: 16px;
             color: rgba(255,255,255,0.8);
-            margin-bottom: 35px;
+            margin-bottom: 30px;
         }
 
         .surprise-close {
             background: transparent;
             border: 1px solid rgba(255,215,0,0.5);
             color: #ffd700;
-            padding: 12px 40px;
-            font-size: 14px;
+            padding: 12px 35px;
+            font-size: 13px;
             letter-spacing: 3px;
             cursor: pointer;
             border-radius: 4px;
@@ -231,16 +231,16 @@
 
         .surprise-btn {
             position: fixed;
-            bottom: 80px;
+            bottom: 90px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
             background: rgba(255,215,0,0.15);
             border: 1px solid rgba(255,215,0,0.4);
             color: #ffd700;
-            padding: 12px 35px;
+            padding: 12px 30px;
             font-size: 13px;
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             cursor: pointer;
             border-radius: 30px;
             backdrop-filter: blur(10px);
@@ -267,7 +267,7 @@
 
     <div class="content">
         <div class="recipient" id="recipient"></div>
-        <div class="greeting" id="greeting">早安</div>
+        <div class="greeting" id="greeting">早上好</div>
         <div class="time" id="time"></div>
         <div class="date" id="date"></div>
         <div class="message" id="message"></div>
@@ -296,18 +296,38 @@
 
     <script>
         const params = new URLSearchParams(window.location.search);
-        const name = params.get('to') || '';
-        const customMsg = params.get('msg') || '';
-        const sender = params.get('from') || '';
+        const name = params.get('n') || '';
+        const customMsg = params.get('m') || '';
+        const sender = params.get('f') || '';
+        const timeParam = params.get('t') || 'morning';
 
-        const quotes = [
+        const morningQuotes = [
             '"山高水长，顺其自然。"',
             '"日出而作，日落而息。"',
             '"天地有大美而不言。"',
             '"行到水穷处，坐看云起时。"',
-            '"明月松间照，清泉石上流。"',
-            '"春风得意马蹄疾。"'
+            '"明月松间照，清泉石上流。"'
         ];
+
+        const noonQuotes = [
+            '"午后的阳光最温柔。"',
+            '"日午槐风起，蔷薇一架香。"',
+            '"独坐黄昏谁是伴，紫薇花对紫薇郎。"',
+            '"树阴满地日当午，梦觉流莺时一声。"'
+        ];
+
+        const eveningQuotes = [
+            '"夕阳无限好，只是近黄昏。"',
+            '"浮云游子意，落日故人情。"',
+            '"日暮苍山远，天寒白屋贫。"',
+            '"一道残阳铺水中，半江瑟瑟半江红。"'
+        ];
+
+        const greetings = {
+            morning: { text: '早上好', emoji: '🌅' },
+            noon: { text: '中午好', emoji: '☀️' },
+            evening: { text: '晚上好', emoji: '🌙' }
+        };
 
         const surprises = [
             { icon: '🌟', text: '今日运势极佳', sub: '做任何事都会顺顺利利！' },
@@ -332,12 +352,18 @@
         }
 
         function initContent() {
+            const greeting = greetings[timeParam] || greetings.morning;
+            document.getElementById('greeting').innerHTML = `<span style="font-size:32px;margin-right:8px">${greeting.emoji}</span>${greeting.text}`;
+
             if (name) {
                 document.getElementById('recipient').textContent = `${name}，`;
             }
             if (customMsg) {
                 document.getElementById('message').textContent = customMsg;
             }
+
+            const quotes = timeParam === 'noon' ? noonQuotes :
+                          timeParam === 'evening' ? eveningQuotes : morningQuotes;
             document.getElementById('quote').textContent = quotes[Math.floor(Math.random() * quotes.length)];
             if (sender) {
                 document.getElementById('shareInfo').textContent = `— 来自 ${sender} 的祝福`;
