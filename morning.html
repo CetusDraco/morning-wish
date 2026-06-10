@@ -802,24 +802,17 @@
 
     <script>
         // ========== 音乐播放器 ==========
-        const musicUrls = [
-            'https://cdn.pixabay.com/audio/2022/03/15/audio_4b3a88d0b0.mp3',
-            'https://cdn.pixabay.com/audio/2022/10/25/audio_946bc8de87.mp3',
-            'https://cdn.pixabay.com/audio/2023/07/30/audio_e5b6e6c3d5.mp3'
-        ];
-        const musicNames = ['清晨', '午后', '夜幕'];
-        let currentMusicIndex = 0;
         let isPlaying = false;
-        let audio = new Audio();
+        const audio = new Audio('music.mp3');
+        audio.loop = true;
 
         function toggleMusic() {
             if (!isPlaying) {
-                loadMusic(currentMusicIndex);
                 audio.play();
                 isPlaying = true;
                 document.getElementById('musicBtn').classList.add('playing');
                 document.getElementById('musicIcon').textContent = '⏸';
-                document.getElementById('musicText').textContent = musicNames[currentMusicIndex];
+                document.getElementById('musicText').textContent = '清风山';
             } else {
                 audio.pause();
                 isPlaying = false;
@@ -827,15 +820,6 @@
                 document.getElementById('musicIcon').textContent = '🎵';
                 document.getElementById('musicText').textContent = '播放音乐';
             }
-        }
-
-        function loadMusic(index) {
-            audio.src = musicUrls[index];
-            audio.addEventListener('ended', () => {
-                currentMusicIndex = (currentMusicIndex + 1) % musicUrls.length;
-                loadMusic(currentMusicIndex);
-                if (isPlaying) audio.play();
-            });
         }
 
         // ========== URL 参数 ==========
