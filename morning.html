@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>祝福</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -10,14 +10,30 @@
         body {
             min-height: 100vh;
             font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-            background: #1a1a1a;
+            background: #0a0a0a;
             overflow: hidden;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
+        /* ========== 取景器基础文字 ========== */
+        .vf-text {
+            font-family: 'Courier New', 'Consolas', monospace;
+            font-size: 11px;
+            color: #c8e6c9;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 4px rgba(200, 230, 200, 0.4);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* ========== 幻灯片背景 ========== */
         .slideshow {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
+            transition: filter 1s ease;
         }
 
         .slide {
@@ -38,23 +54,200 @@
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.4) 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.5) 100%);
         }
 
+        /* ========== 滤镜 ========== */
+        .slideshow.filter-vintage { filter: sepia(0.4) contrast(1.1) brightness(0.9); }
+        .slideshow.filter-bw { filter: grayscale(1) contrast(1.2); }
+        .slideshow.filter-warm { filter: saturate(1.3) brightness(1.05) hue-rotate(-10deg); }
+        .slideshow.filter-cool { filter: saturate(0.9) brightness(1.05) hue-rotate(15deg); }
+
+        /* ========== 暗角叠层 ========== */
         .fade-edge {
             position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
             pointer-events: none; z-index: 3;
-            background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%);
+            background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.5) 100%);
         }
 
         .vignette {
             position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
             pointer-events: none; z-index: 4;
-            box-shadow: inset 0 0 200px rgba(0,0,0,0.5);
+            box-shadow: inset 0 0 250px rgba(0,0,0,0.6);
         }
 
+        /* ========== 九宫格构图线 ========== */
+        .viewfinder-grid {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .grid-line {
+            position: absolute;
+            background: rgba(200, 230, 200, 0.12);
+        }
+
+        .grid-line.h {
+            width: 100%;
+            height: 1px;
+        }
+
+        .grid-line.v {
+            height: 100%;
+            width: 1px;
+        }
+
+        /* ========== 对焦框 ========== */
+        .focus-bracket {
+            position: fixed;
+            width: 50px;
+            height: 50px;
+            z-index: 11;
+            pointer-events: none;
+        }
+
+        .focus-bracket::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+        }
+
+        .focus-bracket.tl::after { border-right: none; border-bottom: none; }
+        .focus-bracket.tr::after { border-left: none; border-bottom: none; }
+        .focus-bracket.bl::after { border-right: none; border-top: none; }
+        .focus-bracket.br::after { border-left: none; border-top: none; }
+
+        @keyframes focusPulse {
+            0% { opacity: 0.3; transform: scale(1.08); }
+            50% { opacity: 1; transform: scale(0.97); }
+            100% { opacity: 0.7; transform: scale(1); }
+        }
+
+        .focus-bracket.focusing {
+            animation: focusPulse 0.8s ease-out forwards;
+        }
+
+        /* ========== AF 对焦指示器 ========== */
+        .af-indicator {
+            position: fixed;
+            top: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 12;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .af-indicator.active { opacity: 1; }
+
+        @keyframes afBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        .af-indicator.focusing span {
+            animation: afBlink 0.2s ease 3;
+        }
+
+        .af-box {
+            display: inline-block;
+            border: 1px solid #c8e6c9;
+            padding: 2px 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #c8e6c9;
+            letter-spacing: 2px;
+            text-shadow: 0 0 4px rgba(200,230,200,0.4);
+        }
+
+        /* ========== 左上角 HUD ========== */
+        .viewfinder-hud-top {
+            position: fixed;
+            top: 22px;
+            left: 22px;
+            z-index: 12;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .battery-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: #c8e6c9;
+            letter-spacing: 1px;
+        }
+
+        .battery-bar {
+            display: inline-block;
+            width: 22px;
+            height: 10px;
+            border: 1px solid #c8e6c9;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .battery-bar::after {
+            content: '';
+            position: absolute;
+            left: 2px; top: 2px;
+            width: 14px; height: 4px;
+            background: #c8e6c9;
+            border-radius: 1px;
+        }
+
+        .battery-cap {
+            display: inline-block;
+            width: 2px;
+            height: 5px;
+            background: #c8e6c9;
+            border-radius: 0 1px 1px 0;
+        }
+
+        .shot-counter {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #c8e6c9;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 4px rgba(200,230,200,0.4);
+        }
+
+        .lens-info {
+            font-family: 'Courier New', monospace;
+            font-size: 9px;
+            color: rgba(200, 230, 200, 0.5);
+            letter-spacing: 1px;
+        }
+
+        /* ========== 右下角曝光参数 ========== */
+        .exposure-info {
+            position: fixed;
+            bottom: 30px;
+            right: 28px;
+            z-index: 12;
+            text-align: right;
+            line-height: 1.9;
+        }
+
+        /* ========== 左下角滤镜模式 ========== */
+        .film-mode {
+            position: fixed;
+            bottom: 30px;
+            left: 28px;
+            z-index: 12;
+        }
+
+        /* ========== 中心内容 ========== */
         .content {
             position: fixed;
             top: 50%; left: 50%;
@@ -65,11 +258,12 @@
         }
 
         .recipient {
-            font-size: 28px;
+            font-family: 'Courier New', monospace;
+            font-size: 26px;
             color: #ffd700;
             margin-bottom: 25px;
             letter-spacing: 6px;
-            text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
         }
 
         .greeting {
@@ -81,19 +275,28 @@
         }
 
         .time {
+            font-family: 'Courier New', 'Consolas', monospace;
             font-size: 85px;
             font-weight: 100;
             color: #fff;
             letter-spacing: 10px;
-            text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            text-shadow: 0 0 30px rgba(200, 230, 200, 0.2);
+            cursor: pointer;
+            transition: text-shadow 0.3s;
+        }
+
+        .time:hover {
+            text-shadow: 0 0 40px rgba(200, 230, 200, 0.4);
         }
 
         .date {
-            font-size: 14px;
-            color: rgba(255,255,255,0.8);
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #c8e6c9;
             letter-spacing: 4px;
             margin-top: 25px;
             text-transform: uppercase;
+            opacity: 0.8;
         }
 
         .message {
@@ -105,6 +308,7 @@
             max-width: 520px;
         }
 
+        /* ========== 诗句 ========== */
         .quote-block {
             position: fixed;
             bottom: 80px;
@@ -127,8 +331,13 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: rgba(200, 230, 200, 0.4);
+            letter-spacing: 2px;
         }
 
+        /* ========== 音乐播放器 ========== */
         .music-player {
             position: fixed;
             top: 20px;
@@ -140,13 +349,14 @@
         }
 
         .music-btn {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: rgba(255,255,255,0.7);
-            padding: 10px 18px;
-            border-radius: 25px;
+            font-family: 'Courier New', monospace;
+            background: rgba(200, 230, 200, 0.08);
+            border: 1px solid rgba(200, 230, 200, 0.25);
+            color: rgba(200, 230, 200, 0.7);
+            padding: 8px 16px;
+            border-radius: 3px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 2px;
             backdrop-filter: blur(10px);
             transition: all 0.3s;
@@ -156,24 +366,19 @@
         }
 
         .music-btn:hover {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
+            background: rgba(200, 230, 200, 0.15);
+            color: #c8e6c9;
         }
 
         .music-btn.playing {
-            background: rgba(255,215,0,0.2);
-            border-color: #ffd700;
+            background: rgba(255,215,0,0.15);
+            border-color: rgba(255, 215, 0, 0.5);
             color: #ffd700;
         }
 
-        .music-icon {
-            font-size: 16px;
-        }
-            font-size: 13px;
-            color: rgba(255,255,255,0.5);
-            letter-spacing: 2px;
-        }
+        .music-icon { font-size: 14px; }
 
+        /* ========== 控制点 ========== */
         .controls {
             position: fixed;
             bottom: 25px;
@@ -188,16 +393,43 @@
             width: 7px;
             height: 7px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.3);
+            background: rgba(200, 230, 200, 0.25);
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .control-dot.active {
-            background: #ffd700;
+            background: #c8e6c9;
             transform: scale(1.3);
+            box-shadow: 0 0 6px rgba(200, 230, 200, 0.5);
         }
 
+        /* ========== 惊喜按钮 ========== */
+        .surprise-btn {
+            position: fixed;
+            bottom: 130px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            font-family: 'Courier New', monospace;
+            background: rgba(255,215,0,0.1);
+            border: 1px solid rgba(255,215,0,0.35);
+            color: #ffd700;
+            padding: 10px 28px;
+            font-size: 11px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            border-radius: 3px;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s;
+        }
+
+        .surprise-btn:hover {
+            background: rgba(255,215,0,0.2);
+            box-shadow: 0 0 25px rgba(255,215,0,0.25);
+        }
+
+        /* ========== 惊喜弹窗 ========== */
         .surprise-modal {
             position: fixed;
             top: 0; left: 0;
@@ -237,14 +469,15 @@
         }
 
         .surprise-close {
+            font-family: 'Courier New', monospace;
             background: transparent;
             border: 1px solid rgba(255,215,0,0.5);
             color: #ffd700;
             padding: 12px 35px;
-            font-size: 13px;
+            font-size: 12px;
             letter-spacing: 3px;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 3px;
             transition: all 0.3s;
         }
 
@@ -272,31 +505,197 @@
             100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
         }
 
-        .surprise-btn {
+        /* ========== 漏光特效 ========== */
+        .light-leak {
             position: fixed;
-            bottom: 130px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            background: rgba(255,215,0,0.15);
-            border: 1px solid rgba(255,215,0,0.4);
-            color: #ffd700;
-            padding: 12px 30px;
-            font-size: 13px;
-            letter-spacing: 3px;
-            cursor: pointer;
-            border-radius: 30px;
-            backdrop-filter: blur(10px);
-            transition: all 0.4s;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 8;
+            pointer-events: none;
+            opacity: 0;
+            background:
+                linear-gradient(135deg,
+                    rgba(255, 100, 50, 0.35) 0%,
+                    rgba(255, 200, 50, 0.25) 20%,
+                    transparent 40%,
+                    transparent 60%,
+                    rgba(255, 150, 200, 0.25) 80%,
+                    rgba(180, 100, 255, 0.35) 100%
+                );
         }
 
-        .surprise-btn:hover {
-            background: rgba(255,215,0,0.25);
-            box-shadow: 0 0 30px rgba(255,215,0,0.3);
+        .light-leak.active {
+            animation: lightLeakFade 2.5s ease-out forwards;
+        }
+
+        @keyframes lightLeakFade {
+            0% { opacity: 0; }
+            15% { opacity: 1; }
+            40% { opacity: 0.7; }
+            100% { opacity: 0; }
+        }
+
+        /* ========== 暗房显影叠层 ========== */
+        .darkroom-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 7;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1s ease, background 1s ease;
+        }
+
+        .darkroom-overlay.whitewash {
+            background: rgba(255, 255, 255, 0.95);
+            opacity: 1;
+        }
+
+        .darkroom-overlay.developing {
+            background: rgba(160, 40, 40, 0.35);
+            opacity: 1;
+        }
+
+        /* ========== 快门闪光 ========== */
+        .shutter-flash {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #fff;
+            z-index: 98;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .shutter-flash.flash {
+            animation: shutterFlash 0.4s ease-out forwards;
+        }
+
+        @keyframes shutterFlash {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .captured-thumb {
+            position: fixed;
+            bottom: 50px;
+            right: 30px;
+            width: 90px;
+            height: 60px;
+            border: 2px solid rgba(255,255,255,0.8);
+            z-index: 97;
+            opacity: 0;
+            background-size: cover;
+            background-position: center;
+            pointer-events: none;
+            animation: thumbFadeIn 0.3s ease 0.2s forwards, thumbFadeOut 0.5s ease 2.5s forwards;
+        }
+
+        @keyframes thumbFadeIn { to { opacity: 0.9; } }
+        @keyframes thumbFadeOut { to { opacity: 0; } }
+
+        /* ========== 胶片条 ========== */
+        .film-strip {
+            position: fixed;
+            bottom: -130px;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            z-index: 15;
+            background: rgba(0, 0, 0, 0.88);
+            border-top: 1px solid rgba(200, 230, 200, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px 25px;
+            transition: bottom 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .film-strip.visible {
+            bottom: 0;
+        }
+
+        /* 胶片齿孔装饰 */
+        .film-strip::before,
+        .film-strip::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 12px;
+            background-image: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 20px,
+                rgba(200, 230, 200, 0.15) 20px,
+                rgba(200, 230, 200, 0.15) 24px,
+                transparent 24px,
+                transparent 44px
+            );
+        }
+
+        .film-strip::before { top: 0; }
+        .film-strip::after { bottom: 0; }
+
+        .film-thumb {
+            width: 90px;
+            height: 60px;
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(200, 230, 200, 0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+            opacity: 0.5;
+            pointer-events: auto;
+        }
+
+        .film-thumb:hover,
+        .film-thumb.active {
+            opacity: 1;
+            border-color: #c8e6c9;
+            box-shadow: 0 0 10px rgba(200, 230, 200, 0.3);
+        }
+
+        .film-thumb.active {
+            transform: scale(1.05);
+        }
+
+        /* ========== 取景器边框圆角 ========== */
+        .viewfinder-frame {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 6;
+            pointer-events: none;
+            border: 1px solid rgba(200, 230, 200, 0.08);
+        }
+
+        /* ========== 移动端响应 ========== */
+        @media (max-width: 480px) {
+            .time { font-size: 52px; letter-spacing: 6px; }
+            .greeting { font-size: 24px; letter-spacing: 5px; }
+            .recipient { font-size: 20px; }
+            .exposure-info { font-size: 9px; bottom: 20px; right: 15px; }
+            .viewfinder-hud-top { top: 15px; left: 15px; }
+            .film-mode { bottom: 20px; left: 15px; font-size: 9px; }
+            .focus-bracket { width: 35px; height: 35px; }
+            .film-thumb { width: 65px; height: 43px; }
+            .surprise-btn { bottom: 110px; padding: 8px 20px; font-size: 10px; }
+            .quote-block { bottom: 65px; }
+            .share-info { bottom: 45px; }
+            .controls { bottom: 18px; }
+            .music-btn { padding: 6px 12px; font-size: 10px; }
+        }
+
+        @media (max-width: 360px) {
+            .time { font-size: 40px; }
+            .greeting { font-size: 20px; }
         }
     </style>
 </head>
 <body>
+    <!-- 音乐播放器 -->
     <div class="music-player">
         <button class="music-btn" id="musicBtn" onclick="toggleMusic()">
             <span class="music-icon" id="musicIcon">🎵</span>
@@ -304,7 +703,8 @@
         </button>
     </div>
 
-    <div class="slideshow">
+    <!-- 背景幻灯片 -->
+    <div class="slideshow" id="slideshow">
         <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920')"></div>
         <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920')"></div>
         <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1920')"></div>
@@ -312,9 +712,39 @@
         <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1920')"></div>
     </div>
 
+    <!-- 暗角叠层 -->
     <div class="fade-edge"></div>
     <div class="vignette"></div>
 
+    <!-- 取景器边框 -->
+    <div class="viewfinder-frame"></div>
+
+    <!-- 九宫格构图线 -->
+    <div class="viewfinder-grid" id="viewfinderGrid"></div>
+
+    <!-- 对焦框 -->
+    <div class="focus-bracket tl" id="bracketTL"></div>
+    <div class="focus-bracket tr" id="bracketTR"></div>
+    <div class="focus-bracket bl" id="bracketBL"></div>
+    <div class="focus-bracket br" id="bracketBR"></div>
+
+    <!-- AF 对焦指示器 -->
+    <div class="af-indicator vf-text" id="afIndicator">
+        <span class="af-box">AF</span>
+    </div>
+
+    <!-- 左上角 HUD -->
+    <div class="viewfinder-hud-top vf-text">
+        <div class="battery-icon">
+            <span>BATT</span>
+            <span class="battery-bar"></span>
+            <span class="battery-cap"></span>
+        </div>
+        <div class="shot-counter" id="shotCounter">1/36</div>
+        <div class="lens-info" id="lensInfo">EF 50mm 1:1.8</div>
+    </div>
+
+    <!-- 中心内容 -->
     <div class="content">
         <div class="recipient" id="recipient"></div>
         <div class="greeting" id="greeting">早上好</div>
@@ -323,16 +753,42 @@
         <div class="message" id="message"></div>
     </div>
 
+    <!-- 诗句 -->
     <div class="quote-block">
         <div class="quote" id="quote"></div>
     </div>
 
-    <button class="surprise-btn" onclick="showSurprise()">✨ 领取今日祝福 ✨</button>
+    <!-- 惊喜按钮 -->
+    <button class="surprise-btn" onclick="showSurprise()">✦ 领取今日祝福 ✦</button>
 
     <div class="share-info" id="shareInfo"></div>
 
+    <!-- 控制点 -->
     <div class="controls" id="controls"></div>
 
+    <!-- 右下角曝光参数 -->
+    <div class="exposure-info vf-text" id="exposureInfo">
+        <div id="shutterSpeed">1/125</div>
+        <div id="aperture">f/2.8</div>
+        <div id="isoVal">ISO 400</div>
+    </div>
+
+    <!-- 左下角滤镜模式 -->
+    <div class="film-mode vf-text" id="filmMode">STD</div>
+
+    <!-- 漏光特效叠层 -->
+    <div class="light-leak" id="lightLeak"></div>
+
+    <!-- 暗房显影叠层 -->
+    <div class="darkroom-overlay" id="darkroomOverlay"></div>
+
+    <!-- 快门闪光 -->
+    <div class="shutter-flash" id="shutterFlash"></div>
+
+    <!-- 胶片条 -->
+    <div class="film-strip" id="filmStrip"></div>
+
+    <!-- 惊喜弹窗 -->
     <div class="surprise-modal" id="surpriseModal">
         <div class="surprise-content">
             <div class="surprise-icon" id="surpriseIcon"></div>
@@ -345,7 +801,7 @@
     <div class="confetti-container" id="confettiContainer"></div>
 
     <script>
-        // 免费音乐源 - 使用Pixabay的免费音乐
+        // ========== 音乐播放器 ==========
         const musicUrls = [
             'https://cdn.pixabay.com/audio/2022/03/15/audio_4b3a88d0b0.mp3',
             'https://cdn.pixabay.com/audio/2022/10/25/audio_946bc8de87.mp3',
@@ -362,7 +818,7 @@
                 audio.play();
                 isPlaying = true;
                 document.getElementById('musicBtn').classList.add('playing');
-                document.getElementById('musicIcon').textContent = '⏸️';
+                document.getElementById('musicIcon').textContent = '⏸';
                 document.getElementById('musicText').textContent = musicNames[currentMusicIndex];
             } else {
                 audio.pause();
@@ -382,12 +838,14 @@
             });
         }
 
+        // ========== URL 参数 ==========
         const params = new URLSearchParams(window.location.search);
         const name = params.get('n') || '';
         const customMsg = params.get('m') || '';
         const sender = params.get('f') || '';
         const timeParam = params.get('t') || 'morning';
 
+        // ========== 诗句 & 问候 ==========
         const morningQuotes = [
             '"山高水长，顺其自然。"',
             '"日出而作，日落而息。"',
@@ -395,27 +853,23 @@
             '"行到水穷处，坐看云起时。"',
             '"明月松间照，清泉石上流。"'
         ];
-
         const noonQuotes = [
             '"午后的阳光最温柔。"',
             '"日午槐风起，蔷薇一架香。"',
             '"独坐黄昏谁是伴，紫薇花对紫薇郎。"',
             '"树阴满地日当午，梦觉流莺时一声。"'
         ];
-
         const eveningQuotes = [
             '"夕阳无限好，只是近黄昏。"',
             '"浮云游子意，落日故人情。"',
             '"日暮苍山远，天寒白屋贫。"',
             '"一道残阳铺水中，半江瑟瑟半江红。"'
         ];
-
         const greetings = {
             morning: { text: '早上好', emoji: '🌅' },
             noon: { text: '中午好', emoji: '☀️' },
             evening: { text: '晚上好', emoji: '🌙' }
         };
-
         const surprises = [
             { icon: '🌟', text: '今日运势极佳', sub: '做任何事都会顺顺利利！' },
             { icon: '💫', text: '好运降临', sub: '今天可能有意外惊喜~' },
@@ -425,22 +879,62 @@
             { icon: '🎯', text: '目标达成', sub: '今天目标都能顺利完成！' }
         ];
 
+        // ========== 取景器状态 ==========
+        const filterModes = ['STD', 'VIVID', 'MONO', 'WARM', 'COOL'];
+        const filterClasses = ['', 'filter-vintage', 'filter-bw', 'filter-warm', 'filter-cool'];
+        let currentFilter = 0;
+        let timeFormatMode = 0; // 0=normal, 1=binary, 2=roman
+        let currentSlide = 0;
+        const totalSlides = 5;
+        const exposurePresets = [
+            { shutter: '1/125', aperture: 'f/2.8', iso: '400' },
+            { shutter: '1/250', aperture: 'f/4.0', iso: '200' },
+            { shutter: '1/60',  aperture: 'f/1.8', iso: '800' },
+            { shutter: '1/500', aperture: 'f/5.6', iso: '100' },
+            { shutter: '1/30',  aperture: 'f/2.0', iso: '1600' }
+        ];
+
+        // ========== 时间更新 ==========
+        let timeRevertTimer = null;
+
         function updateTime() {
             const now = new Date();
-            document.getElementById('time').textContent =
-                now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const h = now.getHours();
+            const m = now.getMinutes();
+
+            if (timeFormatMode === 0) {
+                document.getElementById('time').textContent =
+                    now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+            } else if (timeFormatMode === 1) {
+                // 二进制
+                const hStr = String(h).padStart(2, '0');
+                const mStr = String(m).padStart(2, '0');
+                const bin = (d) => Number(d).toString(2).padStart(4, '0');
+                document.getElementById('time').textContent =
+                    bin(hStr[0]) + ' ' + bin(hStr[1]) + ':' + bin(mStr[0]) + ' ' + bin(mStr[1]);
+            } else if (timeFormatMode === 2) {
+                // 罗马数字
+                const toRoman = (n) => {
+                    const vals = [[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+                    let r = '';
+                    for (const [v, s] of vals) { while (n >= v) { r += s; n -= v; } }
+                    return r || 'O';
+                };
+                document.getElementById('time').textContent = toRoman(h) + ':' + toRoman(m);
+            }
         }
 
         function setDate() {
             const now = new Date();
-            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
             document.getElementById('date').textContent =
-                `${now.getMonth() + 1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
+                `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${weekdays[now.getDay()]}`;
         }
 
+        // ========== 内容初始化 ==========
         function initContent() {
             const greeting = greetings[timeParam] || greetings.morning;
-            document.getElementById('greeting').innerHTML = `<span style="font-size:32px;margin-right:8px">${greeting.emoji}</span>${greeting.text}`;
+            document.getElementById('greeting').innerHTML = `<span style="font-size:28px;margin-right:8px">${greeting.emoji}</span>${greeting.text}`;
 
             if (name) {
                 document.getElementById('recipient').textContent = name;
@@ -453,10 +947,146 @@
                           timeParam === 'evening' ? eveningQuotes : morningQuotes;
             document.getElementById('quote').textContent = quotes[Math.floor(Math.random() * quotes.length)];
             if (sender) {
-                document.getElementById('shareInfo').textContent = `— 来自 ${sender} 的祝福`;
+                document.getElementById('shareInfo').textContent = `FROM: ${sender}`;
             }
         }
 
+        // ========== 取景器初始化 ==========
+        function initViewfinder() {
+            createGridLines();
+            positionBrackets();
+            updateExposureInfo();
+            updateShotCounter();
+            initFilmStrip();
+            triggerFocusAnimation();
+            triggerAF();
+            window.addEventListener('resize', () => {
+                positionBrackets();
+            });
+        }
+
+        function createGridLines() {
+            const grid = document.getElementById('viewfinderGrid');
+            const positions = [33.33, 66.66];
+            positions.forEach(pos => {
+                const hLine = document.createElement('div');
+                hLine.className = 'grid-line h';
+                hLine.style.top = pos + '%';
+                grid.appendChild(hLine);
+
+                const vLine = document.createElement('div');
+                vLine.className = 'grid-line v';
+                vLine.style.left = pos + '%';
+                grid.appendChild(vLine);
+            });
+        }
+
+        function positionBrackets() {
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight / 2;
+            const bw = window.innerWidth <= 480 ? 35 : 50;
+            const hw = 180;
+            const hh = 120;
+            const gap = 15;
+
+            const style = (left, top) => `left:${left}px;top:${top}px;width:${bw}px;height:${bw}px;`;
+            document.getElementById('bracketTL').setAttribute('style', style(cx - hw - gap - bw, cy - hh - gap - bw));
+            document.getElementById('bracketTR').setAttribute('style', style(cx + hw + gap, cy - hh - gap - bw));
+            document.getElementById('bracketBL').setAttribute('style', style(cx - hw - gap - bw, cy + hh + gap));
+            document.getElementById('bracketBR').setAttribute('style', style(cx + hw + gap, cy + hh + gap));
+        }
+
+        function updateExposureInfo() {
+            const p = exposurePresets[currentSlide % exposurePresets.length];
+            document.getElementById('shutterSpeed').textContent = p.shutter;
+            document.getElementById('aperture').textContent = p.aperture;
+            document.getElementById('isoVal').textContent = 'ISO ' + p.iso;
+        }
+
+        function updateShotCounter() {
+            document.getElementById('shotCounter').textContent = (currentSlide + 1) + '/36';
+        }
+
+        function triggerAF() {
+            const el = document.getElementById('afIndicator');
+            el.classList.remove('active', 'focusing');
+            void el.offsetWidth;
+            el.classList.add('active', 'focusing');
+            setTimeout(() => {
+                el.classList.remove('focusing');
+            }, 600);
+            setTimeout(() => {
+                el.classList.remove('active');
+            }, 1500);
+        }
+
+        function triggerFocusAnimation() {
+            document.querySelectorAll('.focus-bracket').forEach(b => {
+                b.classList.remove('focusing');
+                void b.offsetWidth;
+                b.classList.add('focusing');
+            });
+        }
+
+        // ========== 胶片条 ==========
+        function initFilmStrip() {
+            const strip = document.getElementById('filmStrip');
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach((slide, i) => {
+                const thumb = document.createElement('div');
+                thumb.className = 'film-thumb' + (i === 0 ? ' active' : '');
+                thumb.style.backgroundImage = slide.style.backgroundImage;
+                thumb.onclick = () => goToSlide(i);
+                strip.appendChild(thumb);
+            });
+        }
+
+        function updateFilmStripActive() {
+            document.querySelectorAll('.film-thumb').forEach((t, i) => {
+                t.classList.toggle('active', i === currentSlide);
+            });
+        }
+
+        let filmStripTimer = null;
+
+        function toggleFilmStrip(show) {
+            const strip = document.getElementById('filmStrip');
+            if (show) {
+                strip.classList.add('visible');
+                clearTimeout(filmStripTimer);
+                filmStripTimer = setTimeout(() => toggleFilmStrip(false), 4000);
+            } else {
+                strip.classList.remove('visible');
+            }
+        }
+
+        // ========== 幻灯片控制 ==========
+        function goToSlide(index) {
+            document.querySelectorAll('.slide')[currentSlide].classList.remove('active');
+            document.querySelectorAll('.control-dot')[currentSlide].classList.remove('active');
+            currentSlide = index;
+            document.querySelectorAll('.slide')[currentSlide].classList.add('active');
+            document.querySelectorAll('.control-dot')[currentSlide].classList.add('active');
+
+            // 取景器联动
+            triggerAF();
+            triggerFocusAnimation();
+            updateExposureInfo();
+            updateShotCounter();
+            updateFilmStripActive();
+        }
+
+        function createControls() {
+            const container = document.getElementById('controls');
+            document.querySelectorAll('.slide').forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'control-dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => goToSlide(i);
+                container.appendChild(dot);
+            });
+        }
+
+        // ========== 惊喜功能 ==========
         function createConfetti() {
             const container = document.getElementById('confettiContainer');
             const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'];
@@ -484,32 +1114,255 @@
             document.getElementById('surpriseModal').style.display = 'none';
         }
 
-        function createControls() {
-            const container = document.getElementById('controls');
-            document.querySelectorAll('.slide').forEach((_, i) => {
-                const dot = document.createElement('div');
-                dot.className = 'control-dot' + (i === 0 ? ' active' : '');
-                dot.onclick = () => goToSlide(i);
-                container.appendChild(dot);
-            });
+        // ========== 彩蛋 1：双击 → 漏光 ==========
+        let lastTapTime = 0;
+        let lastTapX = 0, lastTapY = 0;
+
+        function triggerLightLeak() {
+            const el = document.getElementById('lightLeak');
+            el.classList.remove('active');
+            void el.offsetWidth;
+            el.classList.add('active');
+            setTimeout(() => el.classList.remove('active'), 2500);
         }
 
-        let currentSlide = 0;
-        function goToSlide(index) {
-            document.querySelectorAll('.slide')[currentSlide].classList.remove('active');
-            document.querySelectorAll('.control-dot')[currentSlide].classList.remove('active');
-            currentSlide = index;
-            document.querySelectorAll('.slide')[currentSlide].classList.add('active');
-            document.querySelectorAll('.control-dot')[currentSlide].classList.add('active');
+        function isInteractiveTarget(el) {
+            return el.closest('.music-player, .surprise-btn, .surprise-modal, .controls, .film-strip');
         }
 
+        // ========== 彩蛋 2：晃动 → 切换滤镜 ==========
+        let lastShakeTime = 0;
+
+        function cycleFilter() {
+            const slideshow = document.getElementById('slideshow');
+            slideshow.classList.remove(filterClasses[currentFilter]);
+            currentFilter = (currentFilter + 1) % filterModes.length;
+            if (filterClasses[currentFilter]) {
+                slideshow.classList.add(filterClasses[currentFilter]);
+            }
+            document.getElementById('filmMode').textContent = filterModes[currentFilter];
+        }
+
+        // 手机加速度检测
+        function handleMotion(e) {
+            const a = e.accelerationIncludingGravity;
+            if (!a) return;
+            const deltaX = Math.abs(a.x);
+            const deltaY = Math.abs(a.y);
+            const deltaZ = Math.abs(a.z);
+            if ((deltaX > 20 || deltaY > 20 || deltaZ > 20) && Date.now() - lastShakeTime > 1500) {
+                lastShakeTime = Date.now();
+                cycleFilter();
+            }
+        }
+
+        // 请求 iOS 设备运动权限
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            document.addEventListener('touchstart', function requestMotion() {
+                DeviceMotionEvent.requestPermission().then(response => {
+                    if (response === 'granted') {
+                        window.addEventListener('devicemotion', handleMotion);
+                    }
+                }).catch(() => {});
+                document.removeEventListener('touchstart', requestMotion);
+            }, { once: true });
+        } else if (window.DeviceMotionEvent) {
+            window.addEventListener('devicemotion', handleMotion);
+        }
+
+        // 桌面鼠标晃动检测
+        let mousePositions = [];
+        document.addEventListener('mousemove', function(e) {
+            const now = Date.now();
+            mousePositions.push({ x: e.clientX, t: now });
+            mousePositions = mousePositions.filter(p => now - p.t < 500);
+
+            if (mousePositions.length >= 8) {
+                let dirChanges = 0;
+                for (let i = 2; i < mousePositions.length; i++) {
+                    const prev = mousePositions[i-1].x - mousePositions[i-2].x;
+                    const curr = mousePositions[i].x - mousePositions[i-1].x;
+                    if ((prev > 5 && curr < -5) || (prev < -5 && curr > 5)) dirChanges++;
+                }
+                if (dirChanges >= 4 && Date.now() - lastShakeTime > 1500) {
+                    lastShakeTime = Date.now();
+                    cycleFilter();
+                    mousePositions = [];
+                }
+            }
+        });
+
+        // ========== 彩蛋 3：长按 → 暗房显影 ==========
+        let longPressTimer = null;
+
+        function triggerDarkroom() {
+            const overlay = document.getElementById('darkroomOverlay');
+            // 阶段1：白化
+            overlay.className = 'darkroom-overlay whitewash';
+            // 阶段2：红色显影
+            setTimeout(() => {
+                overlay.className = 'darkroom-overlay developing';
+            }, 1500);
+            // 阶段3：淡出
+            setTimeout(() => {
+                overlay.className = 'darkroom-overlay';
+                overlay.style.opacity = '0';
+            }, 3000);
+            setTimeout(() => {
+                overlay.style.opacity = '';
+            }, 4500);
+        }
+
+        // ========== 彩蛋 4：三指/Ctrl+点击 → 拍照 ==========
+        function triggerScreenshot() {
+            // 快门闪光
+            const flash = document.getElementById('shutterFlash');
+            flash.classList.remove('flash');
+            void flash.offsetWidth;
+            flash.classList.add('flash');
+            setTimeout(() => flash.classList.remove('flash'), 400);
+
+            // 快门声
+            playShutterSound();
+
+            // 缩略图
+            const thumb = document.createElement('div');
+            thumb.className = 'captured-thumb';
+            thumb.style.backgroundImage = document.querySelectorAll('.slide')[currentSlide].style.backgroundImage;
+            document.body.appendChild(thumb);
+            setTimeout(() => thumb.remove(), 3500);
+        }
+
+        function playShutterSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const bufferSize = Math.floor(ctx.sampleRate * 0.08);
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    const t = i / ctx.sampleRate;
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 50) * 0.25;
+                }
+                const source = ctx.createBufferSource();
+                source.buffer = buffer;
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 2500;
+                filter.Q.value = 1.2;
+                source.connect(filter);
+                filter.connect(ctx.destination);
+                source.start();
+            } catch(e) {}
+        }
+
+        // ========== 彩蛋 5：上滑 → 胶片条 ==========
+        // （在统一触控管理中处理）
+
+        // ========== 彩蛋 6：点击时间 → 切换格式 ==========
+        document.getElementById('time').addEventListener('click', function() {
+            timeFormatMode = (timeFormatMode + 1) % 3;
+            updateTime();
+            clearTimeout(timeRevertTimer);
+            timeRevertTimer = setTimeout(() => {
+                timeFormatMode = 0;
+                updateTime();
+            }, 5000);
+        });
+
+        // ========== 统一触控/鼠标事件管理 ==========
+        let touchStartY = 0;
+        let touchStartX = 0;
+        let touchStartTime = 0;
+
+        // 桌面端
+        document.addEventListener('dblclick', function(e) {
+            if (isInteractiveTarget(e.target)) return;
+            triggerLightLeak();
+        });
+
+        document.addEventListener('mousedown', function(e) {
+            if (isInteractiveTarget(e.target)) return;
+            if (e.button !== 0) return;
+            longPressTimer = setTimeout(triggerDarkroom, 1500);
+        });
+
+        document.addEventListener('mouseup', function() {
+            clearTimeout(longPressTimer);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                triggerScreenshot();
+            }
+        });
+
+        // 触控端
+        document.addEventListener('touchstart', function(e) {
+            touchStartTime = Date.now();
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+
+            // 三指检测
+            if (e.touches.length === 3) {
+                triggerScreenshot();
+                e.preventDefault();
+                return;
+            }
+
+            // 长按计时（排除交互元素）
+            if (!isInteractiveTarget(e.target)) {
+                longPressTimer = setTimeout(triggerDarkroom, 1500);
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', function(e) {
+            clearTimeout(longPressTimer);
+
+            const touch = e.changedTouches[0];
+            const elapsed = Date.now() - touchStartTime;
+            const deltaX = touch.clientX - touchStartX;
+            const deltaY = touchStartY - touch.clientY;
+
+            // 双触检测
+            const now = Date.now();
+            if (now - lastTapTime < 300
+                && Math.abs(touch.clientX - lastTapX) < 50
+                && Math.abs(touch.clientY - lastTapY) < 50
+                && elapsed < 400
+                && !isInteractiveTarget(e.target)) {
+                triggerLightLeak();
+                lastTapTime = 0;
+                return;
+            }
+            lastTapTime = now;
+            lastTapX = touch.clientX;
+            lastTapY = touch.clientY;
+
+            // 上滑检测
+            if (deltaY > 80 && elapsed < 500 && Math.abs(deltaX) < 100) {
+                toggleFilmStrip(true);
+            }
+        }, { passive: true });
+
+        // 桌面滚轮 → 胶片条
+        document.addEventListener('wheel', function(e) {
+            if (e.deltaY < -50) {
+                toggleFilmStrip(true);
+            } else if (e.deltaY > 50) {
+                toggleFilmStrip(false);
+            }
+        }, { passive: true });
+
+        // ========== 初始化 ==========
         initContent();
         updateTime();
         setDate();
         createControls();
+        initViewfinder();
 
         setInterval(updateTime, 1000);
-        setInterval(() => goToSlide((currentSlide + 1) % 5), 8000);
+        setInterval(() => goToSlide((currentSlide + 1) % totalSlides), 8000);
     </script>
 </body>
 </html>
