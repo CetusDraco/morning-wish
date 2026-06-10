@@ -252,17 +252,30 @@
             selectedTime = el.dataset.time;
         }
 
-        function generate() {
+        // 根据当前时间自动选中时段
+        (function autoSelectTime() {
+            const h = new Date().getHours();
+            let timeKey = 'morning';
+            if (h >= 18 || h < 6) timeKey = 'evening';
+            else if (h >= 11 && h < 18) timeKey = 'noon';
+            const target = document.querySelector(`.time-option[data-time="${timeKey}"]`);
+            if (target) selectTime(target);
+        })();
+
+        function buildQuery() {
             const to = document.getElementById('to').value.trim();
             const msg = document.getElementById('msg').value.trim();
             const from = document.getElementById('from').value.trim();
+            let query = '?t=' + selectedTime;
+            if (to) query += '&n=' + encodeURIComponent(to);
+            if (msg) query += '&m=' + encodeURIComponent(msg);
+            if (from) query += '&f=' + encodeURIComponent(from);
+            return query;
+        }
 
-            let url = 'https://cetusdraco.github.io/morning-wish/morning.html?t=' + selectedTime;
-            if (to) url += '&n=' + encodeURIComponent(to);
-            if (msg) url += '&m=' + encodeURIComponent(msg);
-            if (from) url += '&f=' + encodeURIComponent(from);
-
-            document.getElementById('linkInput').value = url;
+        function generate() {
+            document.getElementById('linkInput').value =
+                'https://cetusdraco.github.io/morning-wish/morning.html' + buildQuery();
             document.getElementById('result').style.display = 'block';
         }
 
@@ -280,8 +293,7 @@
         }
 
         function preview() {
-            const url = document.getElementById('linkInput').value;
-            window.open(url, '_blank');
+            window.open('morning.html' + buildQuery(), '_blank');
         }
     </script>
 </body>
